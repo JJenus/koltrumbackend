@@ -18,6 +18,8 @@ public class Setting {
     private String currency;
     private String currencySymbol;
     private String language;
+    private String walletAddress;
+    private String cryptoName;
     private String verificationFee;
     @Column(name = "created_at")
     private LocalDateTime createdAt;

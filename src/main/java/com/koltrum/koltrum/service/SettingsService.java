@@ -24,6 +24,8 @@ public class SettingsService {
                     .language("EN")
                     .currencySymbol("$")
                     .createdAt(LocalDateTime.now())
+                    .walletAddress(null)
+                    .cryptoName("BTC")
                     .updatedAt(LocalDateTime.now()).build();
         }
         return settings.get(0);
