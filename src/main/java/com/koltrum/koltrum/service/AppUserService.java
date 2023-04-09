@@ -95,4 +95,8 @@ public class AppUserService implements UserDetailsService {
     public UserProject subscribeToProject(UserProject userProject) {
         return userProjectRepository.save(userProject);
     }
+
+    public List<UserProject> getAllProjects() {
+        return userProjectRepository.findAll();
+    }
 }

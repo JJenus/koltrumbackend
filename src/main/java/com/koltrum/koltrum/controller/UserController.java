@@ -85,6 +85,11 @@ public class UserController {
     public List<UserProject> getProjects(@PathVariable("id") Long id){
         return appUserService.getProjects(id);
     }
+    
+    @GetMapping("/subscriptions")
+    public List<UserProject> getSubs(){
+        return appUserService.getAllProjects();
+    }
 
     @PostMapping("/subscribe")
     public UserProject subscribe(@RequestBody UserProject userProject){
