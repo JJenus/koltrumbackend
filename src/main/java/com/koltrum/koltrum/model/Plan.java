@@ -16,6 +16,7 @@ public class Plan {
     private String returns;
     private String description;
     private String priority;
+    private String duration = "monthly";
     @OneToMany
     private List<SubscriptionBenefit> benefits;
 }
