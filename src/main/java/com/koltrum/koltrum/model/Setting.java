@@ -17,6 +17,8 @@ public class Setting {
     private Long id;
     private String currency;
     private String currencySymbol;
+    private String paypal;
+    private String skrill;
     private String language;
     private String walletAddress;
     private String cryptoName;
