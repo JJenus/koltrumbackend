@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Builder
@@ -23,6 +24,9 @@ public class Setting {
     private String walletAddress;
     private String cryptoName;
     private String verificationFee;
+    @ManyToMany
+    private List<PaymentOption> paymentOptions;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
