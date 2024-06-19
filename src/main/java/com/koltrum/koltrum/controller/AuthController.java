@@ -1,9 +1,6 @@
 package com.koltrum.koltrum.controller;
 
-import com.koltrum.koltrum.model.AppUser;
-import com.koltrum.koltrum.model.AuthToken;
-import com.koltrum.koltrum.model.ChangePassword;
-import com.koltrum.koltrum.model.LoginSession;
+import com.koltrum.koltrum.model.*;
 import com.koltrum.koltrum.repository.LoginSessionRepo;
 import com.koltrum.koltrum.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,5 +59,21 @@ public class AuthController {
     @PostMapping("/change-password")
     public Map<String, String> changePassword(@RequestBody ChangePassword changePassword){
         return authService.changePassword(changePassword);
+    }
+    @PostMapping("/reset-password")
+    public void requestPassReset(@RequestBody PasswordReset passwordReset) throws IllegalAccessException {
+        authService.sendPasswordReset(passwordReset);
+    }
+
+    @PostMapping("/new-password")
+    public String resetPassword(@RequestBody PasswordReset passwordReset) {
+        String message = "success";
+        try {
+            authService.resetPassword(passwordReset);
+        } catch (IllegalAccessException e) {
+            message = e.getMessage();
+        }
+
+        return message;
     }
 }

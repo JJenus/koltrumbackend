@@ -12,12 +12,14 @@ public class WithdrawalTransaction {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private Long userId;
+    private Long userProjectId;
     private String amount;
     private String currency;
     private String transactionRef;
+    private String source;
     private String status;
     private String destinationType;
-    private Long destinationId;
+    private String destinationId;
     private LocalDateTime createdAt;
 
     @PrePersist

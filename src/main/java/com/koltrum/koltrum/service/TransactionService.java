@@ -1,9 +1,6 @@
 package com.koltrum.koltrum.service;
 
-import com.koltrum.koltrum.model.AppUser;
-import com.koltrum.koltrum.model.DepositTransaction;
-import com.koltrum.koltrum.model.Transfer;
-import com.koltrum.koltrum.model.WithdrawalTransaction;
+import com.koltrum.koltrum.model.*;
 import com.koltrum.koltrum.repository.DepositRepo;
 import com.koltrum.koltrum.repository.TransferRepo;
 import com.koltrum.koltrum.repository.WithdrawalRepo;
@@ -85,21 +82,36 @@ public class TransactionService {
         return transferRepo.save(transfer);
     }
 
-    public WithdrawalTransaction withdraw(WithdrawalTransaction withdrawalTransaction){
-        AppUser user = userService.getUser(withdrawalTransaction.getUserId());
-        if (user == null){
+    public WithdrawalTransaction withdraw(WithdrawalTransaction withdrawal){
+        AppUser user = userService.getUser(withdrawal.getUserId());
+        UserProject userProject = userService.getProject(withdrawal.getUserProjectId());
+        if (user == null || userProject == null){
             return null;
         }
 
         try{
-            int balance = Integer.parseInt( user.getBalance().getAmount()) - Integer.parseInt( withdrawalTransaction.getAmount());
-            user.getBalance().setAmount(""+balance);
+            double wAmount = Double.parseDouble(withdrawal.getAmount());
+            double balance = Double.parseDouble(userProject.getValue())
+                            - wAmount;
+            userProject.setValue(String.format("%.2f", balance));
+
+            if (balance < 1){
+                userProject.setStatus("cancelled");
+            }
+
             //makeTransaction()
-            userService.save(user); //update user
+            userService.subscribeToProject(userProject); //update userproject
+            double uBal = Double.parseDouble(user.getBalance().getAmount());
+
+            if (withdrawal.getDestinationType().equalsIgnoreCase("balance")){
+                user.getBalance().setAmount(
+                        String.format("%.2f", uBal + wAmount)
+                );
+            }
         } catch (Exception e){
-            withdrawalTransaction.setStatus("failed");
+            withdrawal.setStatus("failed");
         }
-        return withdrawalRepo.save(withdrawalTransaction);
+        return withdrawalRepo.save(withdrawal);
     }
 
     public List<Transfer> getTransfers(Long userId){
@@ -119,7 +131,6 @@ public class TransactionService {
         return map;
     }
 
-
     public List<DepositTransaction> getDeposits(Long userId){
         return depositRepo.findByUserId(userId);
     }
@@ -135,5 +146,13 @@ public class TransactionService {
 
     public List<DepositTransaction> getAllDeposits(){
         return depositRepo.findAll();
+    }
+
+    public WithdrawalTransaction confirmWithdrawal(WithdrawalTransaction transaction) throws IllegalAccessException {
+        if (!withdrawalRepo.findById(transaction.getId()).isPresent()){
+            throw new IllegalAccessException("Transaction error");
+        }
+
+        return withdrawalRepo.save(transaction);
     }
 }

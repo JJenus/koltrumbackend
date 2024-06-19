@@ -1,12 +1,10 @@
 package com.koltrum.koltrum.service;
 
-import com.koltrum.koltrum.model.AppUser;
-import com.koltrum.koltrum.model.Role;
-import com.koltrum.koltrum.model.UserProject;
-import com.koltrum.koltrum.model.Wallet;
+import com.koltrum.koltrum.model.*;
 import com.koltrum.koltrum.repository.AppUserRepo;
 import com.koltrum.koltrum.repository.UserProjectRepo;
 import com.koltrum.koltrum.repository.WalletRepository;
+import com.koltrum.koltrum.repository.WithdrawalRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -27,6 +25,8 @@ public class AppUserService implements UserDetailsService {
     private WalletRepository walletRepository;
     @Autowired
     private UserProjectRepo userProjectRepository;
+    @Autowired
+    private WithdrawalRepo withdrawalRepo;
 
     public AppUser getUser(Long id){
         return userRepo.findById(id).orElse(null);
@@ -41,6 +41,7 @@ public class AppUserService implements UserDetailsService {
         if (!optionalAppUser.isPresent()) {
             return null;
         }
+
         return userRepo.save(user);
     }
 
@@ -89,7 +90,25 @@ public class AppUserService implements UserDetailsService {
     }
 
     public List<UserProject> getProjects(Long id) {
-        return userProjectRepository.findByUserId(id);
+        List<UserProject> userProjects = userProjectRepository.findByUserId(id);
+
+        userProjects.forEach(project -> {
+            Long projectId = project.getId();
+            List<WithdrawalTransaction> transactions = withdrawalRepo.findByUserProjectId(projectId);
+            double amount = 0;
+            for (WithdrawalTransaction tr: transactions){
+                amount += Double.parseDouble(tr.getAmount());
+            }
+
+            amount = Double.parseDouble(project.getPlan().getReturns().replace(",","")) - amount;
+            project.getPlan().setReturns(String.format("%.2f", amount));
+        });
+
+        return userProjects;
+    }
+
+    public UserProject getProject(Long id) {
+        return userProjectRepository.findById(id).orElse(null);
     }
 
     public UserProject subscribeToProject(UserProject userProject) {
@@ -97,6 +116,11 @@ public class AppUserService implements UserDetailsService {
     }
 
     public List<UserProject> getAllProjects() {
+
         return userProjectRepository.findAll();
+    }
+
+    public List<WithdrawalTransaction> getUserProjectWithdrawals(Long id) {
+        return withdrawalRepo.findByUserProjectId(id);
     }
 }

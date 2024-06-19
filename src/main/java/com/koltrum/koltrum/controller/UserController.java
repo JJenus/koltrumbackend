@@ -56,6 +56,11 @@ public class UserController {
         return transactionService.withdraw(transaction);
     }
 
+    @PutMapping("/withdraw")
+    public WithdrawalTransaction confirm(@RequestBody WithdrawalTransaction transaction) throws IllegalAccessException {
+        return transactionService.confirmWithdrawal(transaction);
+    }
+
     @GetMapping("/{id}/transactions")
     public Map<String, List<?>> getTransactions(@PathVariable("id") Long id){
         return transactionService.getUserTransactions(id);
@@ -89,6 +94,11 @@ public class UserController {
     @GetMapping("/subscriptions")
     public List<UserProject> getSubs(){
         return appUserService.getAllProjects();
+    }
+
+    @GetMapping("/withdrawals/{id}")
+    public List<WithdrawalTransaction> getWithdrawals(@PathVariable("id") Long id){
+        return appUserService.getUserProjectWithdrawals(id);
     }
 
     @PostMapping("/subscribe")

@@ -4,6 +4,7 @@ import com.koltrum.koltrum.model.*;
 import com.koltrum.koltrum.repository.BalanceRepo;
 import com.koltrum.koltrum.repository.LoginSessionRepo;
 import com.koltrum.koltrum.repository.RoleRepo;
+import com.koltrum.koltrum.repository.TokenRepo;
 import com.koltrum.koltrum.security.JWTUtil;
 import eu.bitwalker.useragentutils.UserAgent;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +32,9 @@ public class AuthService {
     AppUserService appUserService;
     @Autowired
     private JWTUtil jwtUtil;
+
+    @Autowired private TokenRepo tokenRepo;
+    @Autowired private EmailSender emailSender;
 
     private final AuthenticationManager authManager;
     @Autowired
@@ -79,6 +84,7 @@ public class AuthService {
             return null;
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.getBalance().setAmount(settingsService.getSettings().getDefaultBalance());
 
         List<Role> roles = new ArrayList<>();
         Role role;
@@ -187,10 +193,6 @@ public class AuthService {
         return ip;
     }
 
-    String parseXForwardedHeader(String header){
-        System.out.println("\n\n>>> "+header);
-        return header;
-    }
 
     private JSONObject requestLocation(String ip){
 //        https://ipapi.co/146.70.99.181/json for more detailed (inaccurate)
@@ -212,5 +214,60 @@ public class AuthService {
 
     public List<LoginSession> getSessions(Long userId) {
         return loginSessionRepo.findByUserId(userId);
+    }
+
+    public void sendPasswordReset(PasswordReset passwordReset) throws IllegalAccessException {
+        AppUser user = appUserService.getUserByEmail(passwordReset.getEmail());
+        if(user != null){
+            Token token = new Token();
+            token.setUserId(user.getId());
+            String tk;
+            do {
+                tk = generateToken()+"";
+            } while (tokenRepo.findByToken(tk).isPresent());
+
+            token.setToken(tk);
+            token.setExpiresAt(LocalDateTime.now().plusMinutes(35));
+
+            tokenRepo.save(token);
+            System.out.println("Saved Token");
+
+            emailSender.sendReset(user, token.getToken());
+        } else {
+            throw new IllegalAccessException("Email does not exist");
+        }
+    }
+
+    public void resetPassword(PasswordReset passwordReset) throws IllegalAccessException {
+        Token token = tokenRepo.findByToken(passwordReset.getToken()).orElse(null);
+        if (token != null && !token.isUsed()){
+            if (LocalDateTime.now().isAfter(token.getExpiresAt())){
+                throw new IllegalAccessException("Token expired");
+            }
+
+            AppUser user = appUserService.getUser(token.getUserId());
+            if (user != null){
+                user.setPassword(passwordEncoder.encode(passwordReset.getPassword()));
+                appUserService.save(user);
+                token.setUsed(true);
+                tokenRepo.save(token);
+            }else {
+                throw new IllegalAccessException("Unauthorised access");
+            }
+        }
+        else {
+//            assert token != null;
+//            System.out.println(token +" isExpired?: "+ LocalDateTime.now().isAfter(token.getExpiresAt()));
+            throw new IllegalAccessException("Invalid Token");
+        }
+    }
+
+    private int generateToken(){
+        SecureRandom secureRandom = new SecureRandom();
+
+        int min = 100000; // Minimum 6-digit number
+        int max = 99999999; // Maximum 6-digit number
+
+        return secureRandom.nextInt(max - min + 1) + min;
     }
 }

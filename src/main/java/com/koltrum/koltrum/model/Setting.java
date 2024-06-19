@@ -26,6 +26,7 @@ public class Setting {
     private String verificationFee;
     @ManyToMany
     private List<PaymentOption> paymentOptions;
+    private String defaultBalance;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
