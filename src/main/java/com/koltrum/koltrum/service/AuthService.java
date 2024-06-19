@@ -84,7 +84,6 @@ public class AuthService {
             return null;
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.getBalance().setAmount(settingsService.getSettings().getDefaultBalance());
 
         List<Role> roles = new ArrayList<>();
         Role role;
@@ -103,8 +102,9 @@ public class AuthService {
 
         Balance balance = Balance.builder()
                 .currency(currency)
-                .amount("0")
+                .amount(settingsService.getSettings().getDefaultBalance())
                 .build();
+
         balance = balanceRepo.save(balance);
 
         user.setBalance(balance);

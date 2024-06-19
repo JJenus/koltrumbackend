@@ -45,13 +45,14 @@ public class SettingsService {
     public Setting getSettings() {
         List<Setting> settings = settingsRepo.findAll();
         if (settings.isEmpty()) {
-            return Setting.builder().currency("USD")
+            return settingsRepo.save(Setting.builder().currency("USD")
                     .language("EN")
                     .currencySymbol("$")
                     .createdAt(LocalDateTime.now())
                     .walletAddress(null)
                     .cryptoName("BTC")
-                    .updatedAt(LocalDateTime.now()).build();
+                    .defaultBalance("0.00")
+                    .updatedAt(LocalDateTime.now()).build());
         }
         return settings.get(0);
     }

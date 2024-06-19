@@ -1,0 +1,3 @@
+ssh koltrum@ssh-koltrum.alwaysdata.net
+scp koltrum.jar koltrum@ssh-koltrum.alwaysdata.net:
+adrian10jet
